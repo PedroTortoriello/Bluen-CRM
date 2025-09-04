@@ -9,8 +9,8 @@ import json
 import os
 from datetime import datetime, timedelta
 
-# Get base URL from environment
-BASE_URL = "https://shavetime.preview.emergentagent.com"
+# Get base URL from environment - using localhost for testing since external routing has issues
+BASE_URL = "http://localhost:3000"
 API_BASE = f"{BASE_URL}/api"
 
 class BarberShopAPITester:
