@@ -371,6 +371,28 @@ class BarberShopAPITester:
                 
         except Exception as e:
             self.log_result("Request Validation", False, f"Request failed: {str(e)}")
+    
+    def test_invalid_endpoint(self):
+        """Test invalid API endpoint"""
+        try:
+            response = requests.get(f"{self.base_url}/invalid/endpoint")
+            
+            # Should return 404 for invalid endpoint
+            if response.status_code != 404:
+                self.log_result("Invalid Endpoint", False, f"Expected 404, got {response.status_code}")
+                return
+                
+            try:
+                data = response.json()
+                if 'error' in data:
+                    self.log_result("Invalid Endpoint", True, f"Proper 404 handling: {data['error']}")
+                else:
+                    self.log_result("Invalid Endpoint", False, "404 response missing 'error' field")
+            except:
+                self.log_result("Invalid Endpoint", False, "Invalid JSON in 404 response")
+                
+        except Exception as e:
+            self.log_result("Invalid Endpoint", False, f"Request failed: {str(e)}")
         """Test invalid API endpoint"""
         try:
             response = requests.get(f"{self.base_url}/invalid/endpoint")
