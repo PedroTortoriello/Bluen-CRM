@@ -401,13 +401,16 @@ class BarberShopAPITester:
         
         # Run all tests
         self.test_cors_headers()
+        self.test_supabase_client_config()
         self.test_get_tenant()
         self.test_get_services()
         self.test_get_staff()
         self.test_get_availability_missing_params()
         self.test_get_availability_with_params()
+        self.test_availability_algorithm_structure()
         self.test_create_appointment_missing_fields()
         self.test_create_appointment_with_data()
+        self.test_request_validation()
         self.test_invalid_endpoint()
         
         # Summary
