@@ -1,6 +1,13 @@
-const { supabaseAdmin } = require('./lib/supabase')
+require('dotenv').config()
+const { createClient } = require('@supabase/supabase-js')
 const fs = require('fs')
 const path = require('path')
+
+// Create Supabase client with service role key
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+)
 
 async function setupDatabase() {
   try {
