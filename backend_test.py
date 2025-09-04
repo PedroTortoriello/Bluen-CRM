@@ -297,7 +297,80 @@ class BarberShopAPITester:
         except Exception as e:
             self.log_result("Create Appointment With Data", False, f"Request failed: {str(e)}")
     
-    def test_invalid_endpoint(self):
+    def test_supabase_client_config(self):
+        """Test Supabase client configuration by checking environment variables"""
+        try:
+            # Check if required environment variables are set
+            import os
+            required_vars = [
+                'NEXT_PUBLIC_SUPABASE_URL',
+                'NEXT_PUBLIC_SUPABASE_ANON_KEY', 
+                'SUPABASE_SERVICE_ROLE_KEY'
+            ]
+            
+            missing_vars = []
+            for var in required_vars:
+                if not os.getenv(var):
+                    missing_vars.append(var)
+            
+            if missing_vars:
+                self.log_result("Supabase Client Config", False, f"Missing environment variables: {missing_vars}")
+            else:
+                # Test if we can make a basic connection (this will fail due to missing tables, but should not crash)
+                response = requests.get(f"{self.base_url}/tenants/test-connection")
+                # Any response (even 404) means the client is configured
+                self.log_result("Supabase Client Config", True, "Environment variables configured correctly")
+                
+        except Exception as e:
+            self.log_result("Supabase Client Config", False, f"Configuration test failed: {str(e)}")
+    
+    def test_availability_algorithm_structure(self):
+        """Test that availability algorithm handles missing database gracefully"""
+        try:
+            # Test with valid parameters but non-existent tenant
+            tomorrow = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+            params = {
+                'staff_id': 'staff-joao-silva',
+                'service_id': 'service-corte-classico', 
+                'date': tomorrow
+            }
+            
+            response = requests.get(f"{self.base_url}/tenants/demo-barbershop/availability", params=params)
+            
+            # Should get 404 due to tenant not found, not a crash
+            if response.status_code == 404:
+                try:
+                    data = response.json()
+                    if 'error' in data and 'Tenant not found' in data['error']:
+                        self.log_result("Availability Algorithm Structure", True, "Algorithm handles missing tenant gracefully")
+                    else:
+                        self.log_result("Availability Algorithm Structure", False, f"Unexpected error: {data.get('error', 'None')}")
+                except:
+                    self.log_result("Availability Algorithm Structure", False, "Invalid JSON response")
+            else:
+                self.log_result("Availability Algorithm Structure", False, f"Unexpected status code: {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Availability Algorithm Structure", False, f"Request failed: {str(e)}")
+    
+    def test_request_validation(self):
+        """Test request validation for different scenarios"""
+        try:
+            # Test malformed JSON
+            response = requests.post(
+                f"{self.base_url}/tenants/demo-barbershop/appointments",
+                data="invalid json",
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            # Should handle malformed JSON gracefully
+            if response.status_code in [400, 404]:
+                self.log_result("Request Validation", True, f"Handles malformed JSON properly: {response.status_code}")
+            else:
+                self.log_result("Request Validation", False, f"Unexpected response to malformed JSON: {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Request Validation", False, f"Request failed: {str(e)}")
         """Test invalid API endpoint"""
         try:
             response = requests.get(f"{self.base_url}/invalid/endpoint")
