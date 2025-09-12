@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin, db } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { db } from '@/lib/db'
 import { v4 as uuidv4 } from 'uuid'
 
 // Handle CORS
