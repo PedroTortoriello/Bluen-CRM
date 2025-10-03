@@ -475,11 +475,11 @@ const user = {
               </Badge>
             </div>
             <div className="flex items-center space-x-6">
-              <div className="text-right hidden md:block">
+              {/* <div className="text-right hidden md:block">
                 <p className="text-sm font-semibold text-gray-800">Olá, {user.name} 👋</p>
                 <p className="text-xs text-gray-500">{user.email}</p>
-              </div>
-              <Button 
+              </div> */}
+              {/* <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={handleLogout}
@@ -487,7 +487,7 @@ const user = {
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 <span className="hidden md:inline">Sair</span>
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>
