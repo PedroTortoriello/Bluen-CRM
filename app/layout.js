@@ -4,10 +4,11 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Agendamento de Barbearia - Sistema Inteligente',
-  description: 'Sistema completo de agendamento para barbearias com horários em tempo real',
-  keywords: 'barbearia, agendamento, horário, corte, barba',
+  title: 'Flowboard Bluen - Painel Inteligente de Gestão',
+  description: 'Sistema Flowboard da Bluen: dashboard inteligente com visão em tempo real de tarefas, automações e desempenho.',
+  keywords: 'bluen, flowboard, dashboard, automação, gestão, produtividade, tarefas',
 }
+
 
 export default function RootLayout({ children }) {
   return (
