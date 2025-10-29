@@ -410,14 +410,24 @@ const loadLeads = async (fromDate, toDate) => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Image src={Logo} alt="Logo" width={150} height={150} />
-          <Button variant="ghost" onClick={handleLogout} className="text-gray-600 hover:text-blue-600">
-            <LogOut className="mr-2 h-4 w-4" /> Sair
-          </Button>
-        </div>
-      </header>
+        <header className="bg-white border-b shadow-sm sticky top-0 z-50">
+          <div className="max-w-9xl mx-auto px-6 py-4 flex items-center justify-between">
+            {/* 🔹 Logo à esquerda */}
+            <div className="flex items-center gap-3">
+              <Image src={Logo} alt="Logo" width={150} height={150} className="cursor-pointer" />
+            </div>
+
+            {/* 🔹 Botão à direita */}
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              className="flex items-center gap-2 border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-all"
+            >
+              <LogOut className="h-4 w-4" /> 
+              <span className="font-medium">Sair</span>
+            </Button>
+          </div>
+        </header>
 
       <main className="max-w-9xl mx-auto px-6 py-10 space-y-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
