@@ -16,8 +16,8 @@ export default function InboxChat() {
   const messagesEndRef = useRef(null)
 
   const API_URL = 'https://evolution.iabluen.com.br'
-  const API_KEY = '42E83DA04885-45D8-9ED2-A6EFC8B96457'
-  const INSTANCE = 'AgenteBluen'
+  const API_KEY = 'EB014F87BA9C-4762-B328-78C028106E4D'
+  const INSTANCE = 'Bluen'
 
   // ===================== CONTATOS =====================
   const loadContacts = async () => {
