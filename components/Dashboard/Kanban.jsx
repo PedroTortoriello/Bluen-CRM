@@ -40,7 +40,7 @@ function LeadCard({ lead }) {
       style={style}
       {...attributes}
       {...listeners}
-      className="relative group bg-white border border-gray-200 rounded-xl p-3 shadow-sm hover:shadow-md cursor-move transition-all"
+      className="relative group bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing transition-all"
     >
       <div className="space-y-1">
         <h3 className="font-semibold text-gray-900 text-sm truncate">{lead.Nome}</h3>
@@ -50,7 +50,7 @@ function LeadCard({ lead }) {
 
       <button
         onClick={() => setOpen(!open)}
-        className="absolute top-1 right-1 p-1 text-gray-400 hover:text-blue-600 transition"
+        className="absolute top-2 right-2 p-1 text-gray-400 hover:text-blue-600 transition"
       >
         <MoreHorizontal size={16} />
       </button>
@@ -63,7 +63,7 @@ function LeadCard({ lead }) {
               <X size={14} />
             </button>
           </div>
-          <p><strong>Email:</strong> { lead.Email || '—'}</p>
+          <p><strong>Email:</strong> {lead.Email || '—'}</p>
           <p><strong>Empresa:</strong> {lead.Empresa || '—'}</p>
           <p><strong>Telefone:</strong> {lead.numero || lead.phone || '—'}</p>
           <p><strong>Status:</strong> {lead.status || '—'}</p>
@@ -85,8 +85,8 @@ function PipelineColumn({ id, leads, children }) {
   return (
     <div
       ref={setNodeRef}
-      className={`flex-shrink-0 w-72 p-4 rounded-2xl border transition-all ${
-        isOver ? 'bg-blue-50 border-blue-300 shadow-md' : 'bg-gray-50 border-gray-200'
+      className={`flex-1 min-w-[280px] max-w-[350px] bg-gray-50 border rounded-2xl p-4 shadow-sm transition-all ${
+        isOver ? 'bg-blue-50 border-blue-300 shadow-md' : 'border-gray-100'
       }`}
     >
       <div className="flex items-center justify-between mb-3">
@@ -103,9 +103,9 @@ function PipelineColumn({ id, leads, children }) {
         >
           {id}
         </Badge>
-        <span className="text-sm font-bold text-gray-700">{leads.length}</span>
+        <span className="text-sm font-bold text-gray-600">{leads.length}</span>
       </div>
-      <div className="space-y-3 min-h-[120px]">{children}</div>
+      <div className="space-y-3 min-h-[200px]">{children}</div>
     </div>
   )
 }
@@ -168,27 +168,27 @@ export default function KanbanBoard() {
   }
 
   return (
-    <Card className="border border-gray-100 bg-white rounded-2xl shadow-lg overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-gray-50 border-b py-4">
+    <Card className="border border-gray-100 bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-[1600px] mx-auto">
+      <CardHeader className="bg-gradient-to-r from-blue-50 to-gray-50 border-b py-5 px-6">
         <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xl font-bold text-gray-800">
           <div className="flex items-center">
             <Target className="h-6 w-6 mr-2 text-blue-600" />
             Pipeline de Vendas
           </div>
           <p className="text-sm text-gray-600 font-normal mt-1 sm:mt-0">
-            Arraste os cards para mover leads entre estágios
+            Arraste os cards entre estágios
           </p>
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="pt-6">
+      <CardContent className="pt-6 pb-8 px-6">
         {loading ? (
           <div className="text-center text-gray-500 py-10 text-sm">
             Carregando leads...
           </div>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <div className="flex gap-6 overflow-x-auto pb-6">
+            <div className="flex flex-wrap justify-between gap-6 w-full">
               {PIPELINE_COLUMNS.map((column) => (
                 <SortableContext
                   key={column}

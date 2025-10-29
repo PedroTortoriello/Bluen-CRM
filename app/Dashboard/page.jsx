@@ -33,11 +33,13 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
-  CalendarIcon
+  CalendarIcon,
+  KanbanSquare
 } from 'lucide-react'
 import KanbanBoard from '@/components/Dashboard/Kanban'
 import Image from 'next/image'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import InboxChat from '@/components/Dashboard/InboxChat'
 
 export default function CRMDashboard() {
   const [leads, setLeads] = useState([])
@@ -56,6 +58,11 @@ export default function CRMDashboard() {
   const handleDateChange = (range) => {
     setDateRange(range)
     if (range?.from && range?.to) loadLeads(range.from, range.to)
+  }
+
+  const handleDateChange2 = (range) => {
+    setDateRange(range)
+    if (range?.from && range?.to) loadData(range.from, range.to)
   }
 
   const [leadForm, setLeadForm] = useState({
@@ -83,15 +90,24 @@ export default function CRMDashboard() {
     setMetrics({})
   }
 
-// 🔹 Carregar todos os dados (métricas, leads, empresas)
-const loadData = async () => {
+    // 🔹 Carregar todos os dados (métricas, leads, empresas)
+/** @param {Date} [fromDate] @param {Date} [toDate] */
+const loadData = async (fromDate, toDate) => {
   setLoading(true)
   try {
-    const { data: leadsData, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('BluenSDR')
       .select('*')
       .order('created_at', { ascending: false })
 
+    // 🧩 Se datas forem passadas, aplica o filtro
+    if (fromDate && toDate) {
+      query = query
+        .gte('created_at', fromDate.toISOString())
+        .lte('created_at', toDate.toISOString())
+    }
+
+    const { data: leadsData, error } = await query
     if (error) throw error
 
     const mappedLeads = leadsData.map((lead) => ({
@@ -113,6 +129,7 @@ const loadData = async () => {
 
     setLeads(mappedLeads)
 
+    // 🧮 Recalcula métricas com base no filtro
     const statusCounts = mappedLeads.reduce((acc, lead) => {
       acc[lead.status] = (acc[lead.status] || 0) + 1
       return acc
@@ -131,6 +148,7 @@ const loadData = async () => {
     setLoading(false)
   }
 }
+
 
 /** @param {Date} [fromDate] @param {Date} [toDate] */
 const loadLeads = async (fromDate, toDate) => {
@@ -401,83 +419,144 @@ const loadLeads = async (fromDate, toDate) => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-10 space-y-8">
+      <main className="max-w-9xl mx-auto px-6 py-10 space-y-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-2 bg-white border rounded-xl shadow-sm">
+          <TabsList className="grid grid-cols-4 bg-white border rounded-xl shadow-sm">
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <BarChart3 className="h-4 w-4 mr-2" /> Dashboard
             </TabsTrigger>
             <TabsTrigger value="leads" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Users className="h-4 w-4 mr-2" /> Leads
             </TabsTrigger>
+            <TabsTrigger value="kanban" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+             <KanbanSquare className="w-4 h-4" /> KanBan
+            </TabsTrigger>
+            <TabsTrigger value="inbox" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              💬 Caixa de Entrada
+            </TabsTrigger>
           </TabsList>
 
-          {/* ✅ DASHBOARD TAB */}
-          <TabsContent value="dashboard" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 bg-white rounded-xl">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-semibold text-gray-700">Total de Leads</CardTitle>
-                  <div className="bg-blue-100 p-2 rounded-lg">
-                    <Users className="h-5 w-5 text-blue-600" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-gray-900">{metrics.totalLeads || 0}</div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    <span className="text-green-600 font-semibold">↗ +12%</span> vs. mês anterior
-                  </p>
-                </CardContent>
-              </Card>
+            {/* ✅ DASHBOARD TAB */}
+            <TabsContent value="dashboard" className="space-y-6">
 
-              <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 bg-white rounded-xl">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-semibold text-gray-700">Leads Qualificados</CardTitle>
-                  <div className="bg-purple-100 p-2 rounded-lg">
-                    <CheckCircle2 className="h-5 w-5 text-purple-600" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-gray-900">{metrics.statusCounts?.qualificado || 0}</div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    <span className="text-green-600 font-semibold">↗ +8%</span> vs. mês anterior
-                  </p>
-                </CardContent>
-              </Card>
+              {/* 🔹 Filtro de Datas */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-700">📅 Período de Análise</h2>
+                  <p className="text-sm text-gray-500">Selecione um intervalo de tempo para atualizar os dados do dashboard.</p>
+                </div>
 
-              <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 bg-white rounded-xl">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-semibold text-gray-700">Propostas</CardTitle>
-                  <div className="bg-orange-100 p-2 rounded-lg">
-                    <DollarSign className="h-5 w-5 text-orange-600" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-gray-900">{metrics.statusCounts?.proposta || 0}</div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    <span className="text-green-600 font-semibold">↗ +15%</span> vs. mês anterior
-                  </p>
-                </CardContent>
-              </Card>
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* Opções rápidas */}
+                  {[
+                    { label: 'Hoje', range: { from: new Date(), to: new Date() } },
+                    { label: 'Ontem', range: { from: new Date(Date.now() - 86400000), to: new Date(Date.now() - 86400000) } },
+                    { label: 'Últimos 7 dias', range: { from: new Date(Date.now() - 6 * 86400000), to: new Date() } },
+                    { label: 'Últimos 30 dias', range: { from: new Date(Date.now() - 29 * 86400000), to: new Date() } },
+                  ].map((opt) => (
+                    <Button
+                      key={opt.label}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDateChange2(opt.range)}
+                      className="text-sm"
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
 
-              <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 bg-white rounded-xl">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-semibold text-gray-700">Fechados</CardTitle>
-                  <div className="bg-green-100 p-2 rounded-lg">
-                    <TrendingUp className="h-5 w-5 text-green-600" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-gray-900">{metrics.statusCounts?.fechado || 0}</div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    <span className="text-green-600 font-semibold">↗ +20%</span> vs. mês anterior
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+                  {/* Calendário personalizado */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="justify-start text-left font-normal border-gray-300"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateRange?.from && dateRange?.to
+                          ? `${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}`
+                          : 'Selecionar período'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2" align="end">
+                      <Calendar
+                        initialFocus
+                        mode="range"
+                        selected={dateRange}
+                        onSelect={handleDateChange}
+                        locale={ptBR}
+                        numberOfMonths={2}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
 
-            <KanbanBoard leads={leads} onStatusChange={loadLeads} />
-          </TabsContent>
+              {/* 🔹 Cards de Métricas */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 bg-white rounded-xl">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-semibold text-gray-700">Total de Leads</CardTitle>
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                      <Users className="h-5 w-5 text-blue-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-gray-900">{metrics.totalLeads || 0}</div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      <span className="text-green-600 font-semibold">↗ +12%</span> vs. mês anterior
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 bg-white rounded-xl">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-semibold text-gray-700">Leads Qualificados</CardTitle>
+                    <div className="bg-purple-100 p-2 rounded-lg">
+                      <CheckCircle2 className="h-5 w-5 text-purple-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-gray-900">{metrics.statusCounts?.qualificado || 0}</div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      <span className="text-green-600 font-semibold">↗ +8%</span> vs. mês anterior
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 bg-white rounded-xl">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-semibold text-gray-700">Propostas</CardTitle>
+                    <div className="bg-orange-100 p-2 rounded-lg">
+                      <DollarSign className="h-5 w-5 text-orange-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-gray-900">{metrics.statusCounts?.proposta || 0}</div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      <span className="text-green-600 font-semibold">↗ +15%</span> vs. mês anterior
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 bg-white rounded-xl">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-semibold text-gray-700">Fechados</CardTitle>
+                    <div className="bg-green-100 p-2 rounded-lg">
+                      <TrendingUp className="h-5 w-5 text-green-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-gray-900">{metrics.statusCounts?.fechado || 0}</div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      <span className="text-green-600 font-semibold">↗ +20%</span> vs. mês anterior
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+            </TabsContent>
+
 
           {/* ✅ LEADS TAB */}
           <TabsContent value="leads" className="space-y-6">
@@ -509,17 +588,39 @@ const loadLeads = async (fromDate, toDate) => {
                     </Select>
                   </div>
 
-                  {/* Filtro por Data */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* Opções rápidas */}
+                  {[
+                    { label: 'Hoje', range: { from: new Date(), to: new Date() } },
+                    { label: 'Ontem', range: { from: new Date(Date.now() - 86400000), to: new Date(Date.now() - 86400000) } },
+                    { label: 'Últimos 7 dias', range: { from: new Date(Date.now() - 6 * 86400000), to: new Date() } },
+                    { label: 'Últimos 30 dias', range: { from: new Date(Date.now() - 29 * 86400000), to: new Date() } },
+                  ].map((opt) => (
+                    <Button
+                      key={opt.label}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDateChange2(opt.range)}
+                      className="text-sm"
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
+
+                  {/* Calendário personalizado */}
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="justify-start text-left font-normal border-gray-300">
+                      <Button
+                        variant="outline"
+                        className="justify-start text-left font-normal border-gray-300"
+                      >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {dateRange?.from && dateRange?.to
                           ? `${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}`
                           : 'Selecionar período'}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-2" align="end">
                       <Calendar
                         initialFocus
                         mode="range"
@@ -530,6 +631,7 @@ const loadLeads = async (fromDate, toDate) => {
                       />
                     </PopoverContent>
                   </Popover>
+                </div>
                 </div>
               </CardContent>
             </Card>
@@ -596,6 +698,14 @@ const loadLeads = async (fromDate, toDate) => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="inbox">
+            <InboxChat />
+          </TabsContent>
+
+          <TabsContent value="kanban">
+            <KanbanBoard leads={leads} onStatusChange={loadLeads} />
           </TabsContent>
         </Tabs>
       </main>
