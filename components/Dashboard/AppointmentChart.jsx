@@ -4,7 +4,8 @@ import { Calendar, dateFnsLocalizer } from "react-big-calendar"
 import { format, parse, startOfWeek, getDay } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import "react-big-calendar/lib/css/react-big-calendar.css"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { createClient } from "@supabase/supabase-js"
 
 const locales = { "pt-BR": ptBR }
 
@@ -16,11 +17,59 @@ const localizer = dateFnsLocalizer({
   locales,
 })
 
+// 🔑 Conexão do Supabase
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
 export default function ScheduleCalendar({
-  events,
   onCreateEvent,
   onOpenEvent
 }) {
+  const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  // 🔄 Carregar os agendamentos ao abrir o componente
+  useEffect(() => {
+    async function loadEvents() {
+      setLoading(true)
+
+      const { data, error } = await supabase
+        .from("agendamentos")
+        .select("*")
+        .order("inicio", { ascending: true })
+
+      if (error) {
+        console.error("Erro ao carregar agendamentos:", error)
+        setLoading(false)
+        return
+      }
+
+      // 👉 Converter formato do Supabase → formato do calendário
+      const mapped = data.map((item) => ({
+        id: item.id,
+        title: item.titulo,
+        start: new Date(item.inicio),
+        end: new Date(item.fim),
+        color: item.cor,
+        descricao: item.descricao,
+        nome_cliente: item.nome_cliente,
+        email_cliente: item.email_cliente,
+        status: item.status,
+      }))
+
+      setEvents(mapped)
+      setLoading(false)
+    }
+
+    loadEvents()
+  }, [])
+
+  if (loading) {
+    return <p className="p-4">Carregando agenda...</p>
+  }
+
   return (
     <div className="bg-white border rounded-xl shadow-sm p-6">
       <h2 className="text-lg font-semibold text-gray-700 mb-4">
