@@ -5,7 +5,7 @@ import { format, parse, startOfWeek, getDay } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import { useEffect, useState } from "react"
-import { createClient } from "@supabase/supabase-js"
+import { supabaseAdmin } from "@/lib/supabaseAdmin"
 
 const locales = { "pt-BR": ptBR }
 
@@ -18,7 +18,7 @@ const localizer = dateFnsLocalizer({
 })
 
 // 🔑 Conexão do Supabase
-const supabase = createClient(
+const supabase = supabaseAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
