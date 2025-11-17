@@ -14,7 +14,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import Logo from './Logo.png'
 import {
   Users,
   TrendingUp,
@@ -455,7 +454,7 @@ const LeadModal = () => {
           <div className="max-w-9xl mx-auto px-6 py-4 flex items-center justify-between">
             {/* 🔹 Logo à esquerda */}
             <div className="flex items-center gap-3">
-              <Image src={Logo} alt="Logo" width={180} height={180} className="cursor-pointer" />
+              <Image src='https://eaqifsfjoykjhcfcnibk.supabase.co/storage/v1/object/public/images/Logo.png' alt="Logo" width={180} height={180} className="cursor-pointer" />
             </div>
 <div className="flex items-center gap-3">
       <Button 
@@ -763,6 +762,10 @@ const LeadModal = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="agendamentos">
+            <ScheduleCalendar />
           </TabsContent>
 
           <TabsContent value="inbox">
