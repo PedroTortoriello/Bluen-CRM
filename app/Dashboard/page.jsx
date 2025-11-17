@@ -18,9 +18,6 @@ import Logo from './Logo.png'
 import {
   Users,
   TrendingUp,
-  Phone,
-  Mail,
-  Building2,
   Search,
   Plus,
   BarChart3,
@@ -33,13 +30,14 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
-  CalendarIcon,
-  KanbanSquare
+  CalendarIcon
 } from 'lucide-react'
 import KanbanBoard from '@/components/Dashboard/Kanban'
 import Image from 'next/image'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import InboxChat from '@/components/Dashboard/InboxChat'
+import DashboardChart from '@/components/Dashboard/DashboardChart'
+import ScheduleCalendar from '@/components/Dashboard/AppointmentChart'
 
 export default function CRMDashboard() {
   const [leads, setLeads] = useState([])
@@ -48,7 +46,7 @@ export default function CRMDashboard() {
   const [loading, setLoading] = useState(false)
   const [selectedLead, setSelectedLead] = useState(null)
   const [showLeadModal, setShowLeadModal] = useState(false)
-  const [activeTab, setActiveTab] = useState('dashboard')
+  const [activeTab, setActiveTab] = useState('kanban')
 
   // Filters
   const [searchFilter, setSearchFilter] = useState('')
@@ -113,7 +111,7 @@ const loadData = async (fromDate, toDate) => {
     const mappedLeads = leadsData.map((lead) => ({
       id: lead.id,
       name: lead['Nome'] || '—',
-      email: lead['E-mail'] || '—',
+      email: lead['Email'] || '—',
       phone: lead['numero'] || '—',
       company: lead['Empresa'] || '—',
       cargo: lead['cargo'] || '—',
@@ -204,11 +202,18 @@ const loadLeads = async (fromDate, toDate) => {
   return {
     id: lead.id,
     name: lead['Nome'] || '—',
-    email: lead['E-mail'] || '—',
+    email: lead['Email'] || '—',
     phone: lead['numero'] || '—',
     company: lead['Empresa'] || '—',
     cargo: lead['cargo'] || '—',
-    status: lead['status'] || 'Novo',
+    status:
+    lead['status'] === 'novo' ? 'Novo' :
+    lead['status'] === 'agendado' ? 'Agendado' :
+    lead['status'] === 'proposta' ? 'Proposta' :
+    lead['status'] === 'fechado' ? 'Fechado' :
+    lead['status'] === 'recusado' ? 'Recusado' :
+    lead['status'] || 'Novo',
+
     followUp: lead['FollowUp'] || false,
     date: lead['Data'] || lead['created_at'],
     ticket: lead['Ticket'] || null,
@@ -282,6 +287,10 @@ const loadLeads = async (fromDate, toDate) => {
       setLoading(false)
     }
   }
+const capitalize = (text) => {
+  if (!text) return '-'
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
 
   const handleDeleteLead = async (leadId) => {
     if (!confirm('Tem certeza que deseja excluir este lead?')) return
@@ -322,128 +331,167 @@ const loadLeads = async (fromDate, toDate) => {
     })
   }
 
-  const openLeadModal = (lead = null) => {
-    if (lead) {
-      setSelectedLead(lead)
-      setLeadForm(lead)
-    } else {
-      setSelectedLead(null)
-      resetLeadForm()
-    }
-    setShowLeadModal(true)
+const openLeadModal = (lead = null) => {
+  if (lead) {
+    setSelectedLead(lead)
+    setLeadForm({
+      name: lead.name || '',
+      email: lead.email || '',
+      phone: lead.phone || '',
+      company: lead.company || '',
+      cargo: lead.cargo || '',
+      source: lead.source || '',
+      status: lead.status || 'novo',
+      notes: capitalize(lead.customerProblem) || '',
+      priority: lead.priority || 'medio'
+    })
+  } else {
+    setSelectedLead(null)
+    resetLeadForm()
   }
 
-  const LeadModal = () => (
+  setShowLeadModal(true)
+}
+
+
+const LeadModal = () => {
+  const capitalize = (text) => {
+    if (!text) return ''
+    return text.charAt(0).toUpperCase() + text.slice(1)
+  }
+
+  const appointmentsData = [
+  { dia: "01/02", total: 120, studio: 70, equipamento: 30, outros: 20 },
+  { dia: "02/02", total: 110, studio: 60, equipamento: 35, outros: 15 },
+  { dia: "03/02", total: 95, studio: 50, equipamento: 30, outros: 15 },
+  { dia: "04/02", total: 160, studio: 90, equipamento: 50, outros: 20 },
+  { dia: "05/02", total: 200, studio: 120, equipamento: 60, outros: 20 },
+]
+
+
+  return (
     <Dialog open={showLeadModal} onOpenChange={setShowLeadModal}>
       <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
-            {selectedLead ? '✏️ Editar Lead' : '➕ Novo Lead'}
+            Detalhes do Lead
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSaveLead} className="space-y-6">
+
+        <div className="space-y-6">
+
+          {/* Inputs SOMENTE LEITURA */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {['name', 'email', 'phone', 'company', 'cargo'].map((field, i) => (
+            {[
+              { key: 'name', label: 'Nome' },
+              { key: 'email', label: 'Email' },
+              { key: 'phone', label: 'Telefone' },
+              { key: 'company', label: 'Empresa' },
+              { key: 'cargo', label: 'Cargo' },
+            ].map((field, i) => (
               <div key={i} className="space-y-2">
-                <Label className="text-sm font-semibold text-gray-700 capitalize">{field}</Label>
+                <Label className="text-sm font-semibold text-gray-700">{field.label}</Label>
+
                 <Input
-                  type={field === 'email' ? 'email' : 'text'}
-                  value={leadForm[field]}
-                  onChange={(e) => setLeadForm({ ...leadForm, [field]: e.target.value })}
-                  required={['name', 'email'].includes(field)}
-                  className="border-gray-300 focus:border-blue-500"
+                  readOnly
+                  value={leadForm[field.key] || ''}
+                  className="border-gray-300 bg-gray-100 cursor-not-allowed"
                 />
               </div>
             ))}
+
+            {/* Origem - somente leitura */}
             <div className="space-y-2">
               <Label>Origem</Label>
-              <Select value={leadForm.source} onValueChange={(v) => setLeadForm({ ...leadForm, source: v })}>
-                <SelectTrigger><SelectValue placeholder="Origem" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="site">🌐 Site</SelectItem>
-                  <SelectItem value="linkedin">💼 LinkedIn</SelectItem>
-                  <SelectItem value="email">📧 Email</SelectItem>
-                  <SelectItem value="telefone">📞 Telefone</SelectItem>
-                  <SelectItem value="indicacao">👥 Indicação</SelectItem>
-                  <SelectItem value="n8n">🤖 N8N</SelectItem>
-                </SelectContent>
+              <Select disabled>
+                <SelectTrigger className="bg-gray-100 cursor-not-allowed">
+                  <SelectValue placeholder={leadForm.source || '—'} />
+                </SelectTrigger>
               </Select>
             </div>
+
+            {/* Status - somente leitura */}
             <div className="space-y-2">
               <Label>Status</Label>
-              <Select value={leadForm.status} onValueChange={(v) => setLeadForm({ ...leadForm, status: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="novo">🆕 Novo</SelectItem>
-                  <SelectItem value="contatado">📞 Contatado</SelectItem>
-                  <SelectItem value="qualificado">✅ Qualificado</SelectItem>
-                  <SelectItem value="proposta">📄 Proposta</SelectItem>
-                  <SelectItem value="fechado">🎉 Fechado</SelectItem>
-                  <SelectItem value="perdido">❌ Perdido</SelectItem>
-                </SelectContent>
+              <Select disabled>
+                <SelectTrigger className="bg-gray-100 cursor-not-allowed">
+                  <SelectValue placeholder={leadForm.status || '—'} />
+                </SelectTrigger>
               </Select>
             </div>
           </div>
 
+          {/* Observações SOMENTE LEITURA */}
           <div>
             <Label>Observações</Label>
             <Textarea
-              value={leadForm.notes}
-              onChange={(e) => setLeadForm({ ...leadForm, notes: e.target.value })}
-              placeholder="Adicione observações sobre este lead..."
+              readOnly
+              value={leadForm.notes || ''}
+              className="bg-gray-100 cursor-not-allowed"
             />
           </div>
 
-          <div className="flex gap-3">
-            <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
-              {loading ? 'Salvando...' : 'Salvar'}
-            </Button>
-            <Button type="button" variant="outline" className="flex-1" onClick={() => setShowLeadModal(false)}>
-              Cancelar
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              onClick={() => setShowLeadModal(false)}
+              className="bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Fechar
             </Button>
           </div>
-        </form>
+
+        </div>
       </DialogContent>
     </Dialog>
   )
+}
+
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-        <header className="bg-white border-b shadow-sm sticky top-0 z-50">
+        <header className="bg-blue-600 border-b shadow-sm sticky top-0 z-50">
           <div className="max-w-9xl mx-auto px-6 py-4 flex items-center justify-between">
             {/* 🔹 Logo à esquerda */}
             <div className="flex items-center gap-3">
-              <Image src={Logo} alt="Logo" width={150} height={150} className="cursor-pointer" />
+              <Image src={Logo} alt="Logo" width={180} height={180} className="cursor-pointer" />
             </div>
+<div className="flex items-center gap-3">
+      <Button 
+        onClick={() => alert("Obrigada por enviar sua sugestão ❤️")}
+        className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2 px-3"
+      >
+        ⭐ Sugerir melhoras
+      </Button>
 
-            {/* 🔹 Botão à direita */}
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="flex items-center gap-2 border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-all"
-            >
-              <LogOut className="h-4 w-4" /> 
-              <span className="font-medium">Sair</span>
-            </Button>
+      <Button
+        variant="outline"
+        onClick={handleLogout}
+        className="flex items-center gap-2 border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-all"
+      >
+        <LogOut className="h-4 w-4" /> 
+        <span className="font-medium">Sair</span>
+      </Button>
+    </div>
           </div>
         </header>
 
       <main className="max-w-9xl mx-auto px-6 py-10 space-y-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-4 bg-white border rounded-xl shadow-sm">
-            <TabsTrigger value="dashboard" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-              <BarChart3 className="h-4 w-4 mr-2" /> Dashboard
-            </TabsTrigger>
+        <Tabs defaultValue="kanban" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-5 gap-1 bg-white border rounded-xl shadow-sm p-1">
+            <TabsTrigger value="kanban" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <BarChart3 className="h-4 w-4 mr-2" /> CRM
+            </TabsTrigger>            
+            <TabsTrigger value="inbox" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              Atendimentos
+            </TabsTrigger>   
             <TabsTrigger value="leads" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Users className="h-4 w-4 mr-2" /> Leads
-            </TabsTrigger>
-            <TabsTrigger value="kanban" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-             <KanbanSquare className="w-4 h-4" /> KanBan
-            </TabsTrigger>
-            <TabsTrigger value="inbox" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-              💬 Caixa de Entrada
-            </TabsTrigger>
+            </TabsTrigger>  
+            <TabsTrigger value="agendamentos" className="data-[state=active]:bg-blue-800 data-[state=active]:text-white">Agendamentos</TabsTrigger>
+            <TabsTrigger value="dashboard" className="data-[state=active]:bg-blue-800 data-[state=active]:text-white">Indicadores</TabsTrigger>
+          
           </TabsList>
 
             {/* ✅ DASHBOARD TAB */}
@@ -564,8 +612,15 @@ const loadLeads = async (fromDate, toDate) => {
                   </CardContent>
                 </Card>
               </div>
+              {/* 🔹 Gráfico de Indicadores */}
+         
 
             </TabsContent>
+
+            <TabsContent value="agendamentos" className="space-y-6">
+              {/* <ScheduleCalendar/> */}
+            </TabsContent>
+
 
 
           {/* ✅ LEADS TAB */}
@@ -664,7 +719,7 @@ const loadLeads = async (fromDate, toDate) => {
                     <table className="w-full">
                       <thead className="bg-gray-100 border-b text-xs uppercase tracking-wide text-gray-700">
                         <tr>
-                          <th className="px-6 py-3 text-left">Lead</th>
+                          <th className="px-6 py-3 text-left">Nome</th>
                           <th className="px-6 py-3 text-left">Empresa</th>
                           <th className="px-6 py-3 text-left">Necessidade</th>
                           <th className="px-6 py-3 text-left">Status</th>
@@ -679,11 +734,11 @@ const loadLeads = async (fromDate, toDate) => {
                             <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
                               <td className="px-6 py-4">
                                 <div className="font-semibold">{lead.name}</div>
-                                <div className="text-xs text-gray-500">{lead.Email}</div>
+                                <div className="text-xs text-gray-500">{lead.email}</div>
                               </td>
                               <td className="px-6 py-4">{lead.company || '-'}</td>
                               <td className="px-6 py-4 text-sm text-gray-600">
-                                <Badge>{lead.problema_do_cliente || '-'}</Badge>
+                                <Badge>{capitalize(lead.customerProblem)}</Badge>
                               </td>
                               <td className="px-6 py-4">
                                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${ticketStatus.color} ${ticketStatus.textColor}`}>
@@ -717,6 +772,7 @@ const loadLeads = async (fromDate, toDate) => {
           <TabsContent value="kanban">
             <KanbanBoard leads={leads} onStatusChange={loadLeads} />
           </TabsContent>
+
         </Tabs>
       </main>
 

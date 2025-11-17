@@ -1,17 +1,15 @@
-const withPWA = require("next-pwa")({
-  dest: "public",        // pasta onde o service worker será gerado
-  register: true,        // registra automaticamente o SW
-  skipWaiting: true,     // ativa atualização automática
-});
-
-const nextConfig = withPWA({
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   output: 'standalone',
+
   images: {
     unoptimized: true,
   },
+
   experimental: {
     serverComponentsExternalPackages: ['mongodb'],
   },
+
   webpack(config, { dev }) {
     if (dev) {
       config.watchOptions = {
@@ -22,10 +20,12 @@ const nextConfig = withPWA({
     }
     return config;
   },
+
   onDemandEntries: {
     maxInactiveAge: 10000,
     pagesBufferLength: 2,
   },
+
   async headers() {
     return [
       {
@@ -40,6 +40,6 @@ const nextConfig = withPWA({
       },
     ];
   },
-});
+};
 
 module.exports = nextConfig;

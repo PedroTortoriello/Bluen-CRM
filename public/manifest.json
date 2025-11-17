@@ -1,9 +1,0 @@
-{
-  "name": "Nome do Sistema",
-  "short_name": "Sistema",
-  "description": "Descrição do seu sistema",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#5e819e"
-}

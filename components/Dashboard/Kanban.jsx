@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Target, MoreHorizontal, X } from 'lucide-react'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
-const PIPELINE_COLUMNS = ['Novo', 'Qualificado', 'Proposta', 'Fechado']
+const PIPELINE_COLUMNS = ['NOVO', 'AGENDADO', 'PROPOSTA', 'FECHADO', 'RECUSADO']
 
 // ===============================
 // 🧩 LEAD CARD
@@ -80,7 +80,8 @@ export default function KanbanBoard() {
   }, [])
 
   // 🔹 Organiza por coluna
-  const leadsByStatus = (status) => leads.filter((l) => (l.status || 'Novo') === status)
+const leadsByStatus = (status) =>
+  leads.filter((l) => (l.status || 'NOVO').toUpperCase() === status);
 
   // 🔹 Quando arrasta e solta
   const handleDragEnd = async (result) => {
@@ -95,7 +96,8 @@ export default function KanbanBoard() {
   const draggedLead = leads.find((l) => l.id.toString() === draggableId)
   if (!draggedLead) return
 
-  const newStatus = destination.droppableId
+const newStatus = destination.droppableId.trim().toUpperCase();
+
 
   // Atualiza localmente
   setLeads((prev) =>
@@ -123,7 +125,7 @@ export default function KanbanBoard() {
         <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xl font-bold text-gray-800">
           <div className="flex items-center">
             <Target className="h-6 w-6 mr-2 text-blue-600" />
-            Pipeline de Vendas
+            Funil de Vendas
           </div>
           <p className="text-sm text-gray-600 font-normal mt-1 sm:mt-0">
             Arraste os cards entre estágios
@@ -154,13 +156,15 @@ export default function KanbanBoard() {
                       <div className="flex items-center justify-between mb-3">
                         <Badge
                           className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                            col === 'Novo'
-                              ? 'bg-gray-200 text-gray-800'
-                              : col === 'Qualificado'
-                              ? 'bg-blue-200 text-blue-800'
-                              : col === 'Proposta'
-                              ? 'bg-yellow-200 text-yellow-800'
-                              : 'bg-green-200 text-green-800'
+                          col === 'NOVO'
+                            ? 'bg-gray-200 text-gray-800'
+                            : col === 'AGENDADO'
+                            ? 'bg-blue-200 text-blue-800'
+                            : col === 'PROPOSTA'
+                            ? 'bg-yellow-200 text-yellow-800'
+                            : col === 'FECHADO'
+                            ? 'bg-green-200 text-green-800'
+                            : 'bg-red-200 text-red-800' // RECUSADO
                           }`}
                         >
                           {col}
