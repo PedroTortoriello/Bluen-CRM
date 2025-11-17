@@ -24,8 +24,6 @@ import {
 } from 'lucide-react'
 import './App.css'
 import Image from 'next/image';
-import Logo from './Dashboard/Logo.png'; // ajuste o caminho da sua imagem
-
 
 
 function App() {
@@ -268,7 +266,7 @@ const handleRegister = async (e) => {
         {/* Header */}
 <div className="flex justify-center mb-8">
   <Image 
-    src={Logo} 
+    src='https://eaqifsfjoykjhcfcnibk.supabase.co/storage/v1/object/public/images/Logo.png'
     alt="Logo" 
     width={320} 
     height={320} 
