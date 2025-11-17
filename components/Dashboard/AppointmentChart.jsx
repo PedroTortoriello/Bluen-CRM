@@ -5,7 +5,7 @@ import { format, parse, startOfWeek, getDay } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import { useEffect, useState } from "react"
-import { supabaseAdmin } from "@/lib/supabaseAdmin"
+import { supabaseAdmin } from "@/lib/supabaseAdmin" // ❗ igual usado no Dashboard
 
 const locales = { "pt-BR": ptBR }
 
@@ -17,57 +17,64 @@ const localizer = dateFnsLocalizer({
   locales,
 })
 
-// 🔑 Conexão do Supabase
-const supabase = supabaseAdmin(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-
-export default function ScheduleCalendar({
-  onCreateEvent,
-  onOpenEvent
-}) {
+export default function ScheduleCalendar() {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // 🔄 Carregar os agendamentos ao abrir o componente
-  useEffect(() => {
-    async function loadEvents() {
+  // ---------------------------------------------
+  // 🔥 Buscar agendamentos do Supabase (Admin)
+  // ---------------------------------------------
+  const loadAgendamentos = async () => {
+    try {
       setLoading(true)
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from("agendamentos")
         .select("*")
         .order("inicio", { ascending: true })
 
-      if (error) {
-        console.error("Erro ao carregar agendamentos:", error)
-        setLoading(false)
-        return
-      }
+      if (error) throw error
 
-      // 👉 Converter formato do Supabase → formato do calendário
+      // Transformar no formato do react-big-calendar
       const mapped = data.map((item) => ({
         id: item.id,
         title: item.titulo,
         start: new Date(item.inicio),
         end: new Date(item.fim),
-        color: item.cor,
+        color: item.cor || "#2563eb",
         descricao: item.descricao,
+        status: item.status,
         nome_cliente: item.nome_cliente,
         email_cliente: item.email_cliente,
-        status: item.status,
       }))
 
       setEvents(mapped)
+    } catch (err) {
+      console.error("Erro ao buscar agendamentos:", err.message)
+    } finally {
       setLoading(false)
     }
+  }
 
-    loadEvents()
+  // Carregar ao abrir a página
+  useEffect(() => {
+    loadAgendamentos()
   }, [])
 
+  const handleOpenEvent = (event) => {
+    alert(
+      `Evento: ${event.title}\nInício: ${event.start}\nFim: ${event.end}`
+    )
+  }
+
+  const handleCreateEvent = (slotInfo) => {
+    alert(
+      `Criar novo evento:\nInício: ${slotInfo.start}\nFim: ${slotInfo.end}`
+    )
+  }
+
   if (loading) {
-    return <p className="p-4">Carregando agenda...</p>
+    return <p className="p-4 text-gray-600">Carregando agenda...</p>
   }
 
   return (
@@ -85,13 +92,12 @@ export default function ScheduleCalendar({
           selectable
           step={30}
           timeslots={2}
-          onSelectEvent={onOpenEvent}
-          onSelectSlot={(slot) => onCreateEvent(slot)}
+          onSelectEvent={handleOpenEvent}
+          onSelectSlot={handleCreateEvent}
           popup
-          style={{ borderRadius: "12px" }}
           eventPropGetter={(event) => ({
             style: {
-              backgroundColor: event.color || "#2563eb",
+              backgroundColor: event.color,
               borderRadius: "8px",
               color: "white",
               padding: "4px",
