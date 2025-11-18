@@ -1,3 +1,4 @@
+'use client'
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 
 const chartData = [
@@ -7,7 +8,7 @@ const chartData = [
   { month: 'Abr', agendamentos: 700, propostas: 310, vendas: 150 },
 ];
 
-export function DashboardChart() {
+export default function DashboardChart() {
   return (
     <Card className="p-6 mt-8">
       <CardTitle className="mb-2 font-semibold">📈 Evolução Mensal</CardTitle>

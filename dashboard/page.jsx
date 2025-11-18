@@ -31,12 +31,12 @@ import {
   Clock,
   CalendarIcon
 } from 'lucide-react'
-import KanbanBoard from '@/components/Dashboard/Kanban'
+import KanbanBoard from '@/components/PageComponents/Kanban'
 import Image from 'next/image'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import InboxChat from '@/components/Dashboard/InboxChat'
-import DashboardChart from '@/components/Dashboard/DashboardChart'
-import ScheduleCalendar from '@/components/Dashboard/AppointmentChart'
+import InboxChat from '@/components/PageComponents/InboxChat'
+import DashboardChart from '@/components/PageComponents/DashboardChart'
+import ScheduleCalendar from '@/components/PageComponents/AppointmentChart'
 
 export default function CRMDashboard() {
   const [leads, setLeads] = useState([])
@@ -51,7 +51,28 @@ export default function CRMDashboard() {
   const [searchFilter, setSearchFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [dateRange, setDateRange] = useState({ from: null, to: null })
+// ESTADO ÚNICO PARA A AGENDA
+const [agenda, setAgenda] = useState({
+  horaInicio: "09:00",
+  horaFim: "18:00",
+  intervalo: 20,
+  diasSelecionados: []
+})
 
+const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
+
+const toggleDia = (index) => {
+  setAgenda((prev) => ({
+    ...prev,
+    diasSelecionados: prev.diasSelecionados.includes(index)
+      ? prev.diasSelecionados.filter((d) => d !== index)
+      : [...prev.diasSelecionados, index],
+  }))
+}
+
+const gerarHorarios = () => {
+  console.log("Gerando horários:", agenda)
+}
   const handleDateChange = (range) => {
     setDateRange(range)
     if (range?.from && range?.to) loadLeads(range.from, range.to)
@@ -612,7 +633,7 @@ const LeadModal = () => {
                 </Card>
               </div>
               {/* 🔹 Gráfico de Indicadores */}
-         
+              <DashboardChart leads={leads} />
 
             </TabsContent>
 
@@ -766,6 +787,70 @@ const LeadModal = () => {
 
           <TabsContent value="agendamentos">
             <ScheduleCalendar />
+
+            <Card className="border shadow-sm">
+    <CardHeader>
+      <CardTitle>Gerar Horários Disponíveis</CardTitle>
+    </CardHeader>
+    <CardContent className="space-y-4">
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <Label>Horário de início</Label>
+          <Input
+            type="time"
+value={agenda.horaInicio}
+onChange={(e) =>
+  setAgenda({ ...agenda, horaInicio: e.target.value })
+}
+          />
+        </div>
+
+        <div>
+          <Label>Horário de fim</Label>
+          <Input
+            type="time"
+  value={agenda.horaFim}
+  onChange={(e) =>
+    setAgenda({ ...agenda, horaFim: e.target.value })
+  }
+          />
+        </div>
+
+        <div>
+          <Label>Intervalo (minutos)</Label>
+          <Input
+            type="number"
+           value={agenda.intervalo}
+  onChange={(e) =>
+    setAgenda({ ...agenda, intervalo: Number(e.target.value) })
+  }
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-7 gap-2">
+        {diasSemana.map((dia, index) => (
+<Button
+  key={index}
+  variant={agenda.diasSelecionados.includes(index) ? "default" : "outline"}
+  onClick={() => toggleDia(index)}
+>
+  {dia}
+</Button>
+        ))}
+      </div>
+
+      <Button
+        className="bg-blue-600 text-white"
+        onClick={gerarHorarios}
+      >
+        Gerar horários e enviar para o calendário
+      </Button>
+
+    </CardContent>
+  </Card>
+
           </TabsContent>
 
           <TabsContent value="inbox">
